@@ -360,8 +360,9 @@ quick_setup() {
 # ============================================================
 expert_setup() {
     step "Expert Mode"
-    echo "  Skipping all checks. Installing symlink only."
+    echo "  Skipping dependency checks. Installing symlink only."
     install_ghost
+    configure_path
     info "Done. You know what you're doing. 🤘"
 }
 
