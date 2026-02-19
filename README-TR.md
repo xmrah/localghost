@@ -1,9 +1,9 @@
-# LocalLocalGhost CLI 👻
+# LocalGhost CLI 👻
 
 > **Linux için Yerel Yapay Zeka Terminal Asistanı**
 > *Sıfır bağımlılık. %100 Gizlilik. Hibrit & Dağıtım Bağımsız.*
 
-**LocalLocalGhost**, doğal dilde yazdığınız istekleri Linux terminal komutlarına dönüştüren, [Ollama](https://ollama.com) tabanlı hafif bir CLI aracıdır.
+**LocalGhost**, doğal dilde yazdığınız istekleri Linux terminal komutlarına dönüştüren, [Ollama](https://ollama.com) tabanlı hafif bir CLI aracıdır.
 
 **Güvenli, şeffaf ve dağıtım bağımsız** olacak şekilde tasarlanmıştır. NixOS, Arch, Debian, Fedora ve diğerlerinde sorunsuz çalışır.
 
@@ -20,8 +20,8 @@
 
 ```bash
 # 1. İndir
-git clone https://github.com/xmrah/locallocalghost.git
-cd locallocalghost
+git clone https://github.com/xmrah/localghost.git
+cd localghost
 
 # 2. Kur (interaktif sihirbaz)
 ./install.sh
@@ -42,14 +42,14 @@ Hiçbir şey indirmeden veya kurmadan direkt çalıştırabilirsiniz:
 
 ```bash
 # GitHub üzerinden anında çalıştır
-nix run github:xmrah/locallocalghost -- "sistemi güncelle"
+nix run github:xmrah/localghost -- "sistemi güncelle"
 ```
 
 Veya geliştirme ortamına girmek için:
 
 ```bash
-git clone https://github.com/xmrah/locallocalghost.git
-cd locallocalghost
+git clone https://github.com/xmrah/localghost.git
+cd localghost
 nix develop
 ```
 
@@ -57,21 +57,21 @@ nix develop
 
 ```bash
 # Sistem güncelleme
-locallocalghost "sistemi güncelle"
+localghost "sistemi güncelle"
 
 # Dosya bulma
-locallocalghost "500MB'dan büyük dosyaları bul"
+localghost "500MB'dan büyük dosyaları bul"
 
 # Video sıkıştırma
-locallocalghost "video.mp4 dosyasını 720p olarak sıkıştır"
+localghost "video.mp4 dosyasını 720p olarak sıkıştır"
 
 # Donanım bilgisi
-locallocalghost "ekran kartı sıcaklığını göster"
+localghost "ekran kartı sıcaklığını göster"
 ```
 
 ## Güvenlik
 
-LocalLocalGhost **sadece komutu ekrana yazar**, asla otomatik çalıştırmaz. Yine de modelin ürettiği komutları çalıştırmadan önce gözden geçirmeniz önerilir.
+LocalGhost **sadece komutu ekrana yazar**, asla otomatik çalıştırmaz. Yine de modelin ürettiği komutları çalıştırmadan önce gözden geçirmeniz önerilir.
 
 ---
 MIT Lisansı © [xmrah](https://github.com/xmrah)nd: rm -rf /

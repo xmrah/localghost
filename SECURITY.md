@@ -2,18 +2,18 @@
 
 ## Scope
 
-LocalLocalGhost is a **local-only** tool. It communicates exclusively with `localhost` (127.0.0.1) via the Ollama API. No data is transmitted to external servers.
+LocalGhost is a **local-only** tool. It communicates exclusively with `localhost` (127.0.0.1) via the Ollama API. No data is transmitted to external servers.
 
-## What LocalLocalGhost Does NOT Do
+## What LocalGhost Does NOT Do
 
-- LocalLocalGhost does **not** execute commands. It only prints them to stdout.
-- LocalLocalGhost does **not** store or log your queries.
-- LocalLocalGhost does **not** make any network requests other than to your local Ollama instance.
-- LocalLocalGhost does **not** require root/sudo privileges to install or run.
+- LocalGhost does **not** execute commands. It only prints them to stdout.
+- LocalGhost does **not** store or log your queries.
+- LocalGhost does **not** make any network requests other than to your local Ollama instance.
+- LocalGhost does **not** require root/sudo privileges to install or run.
 
 ## Built-in Safety
 
-LocalLocalGhost includes a regex-based dangerous command filter that flags:
+LocalGhost includes a regex-based dangerous command filter that flags:
 - Recursive deletion (`rm -rf`)
 - Disk formatting (`mkfs`, `dd`, `fdisk`)
 - Fork bombs
@@ -24,10 +24,10 @@ LocalLocalGhost includes a regex-based dangerous command filter that flags:
 
 ## Reporting Vulnerabilities
 
-If you find a security issue (e.g., a bypass in the safety filter, or a way to make LocalLocalGhost execute code), please:
+If you find a security issue (e.g., a bypass in the safety filter, or a way to make LocalGhost execute code), please:
 
 1. **Do NOT open a public issue.**
-2. Email: [open a private security advisory on GitHub](https://github.com/xmrah/locallocalghost/security/advisories/new)
+2. Email: [open a private security advisory on GitHub](https://github.com/xmrah/localghost/security/advisories/new)
 3. Include steps to reproduce.
 
 I will respond within 48 hours.

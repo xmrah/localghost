@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# LocalLocalGhost CLI Installer (Universal Linux)
-# https://github.com/xmrah/locallocalghost
+# LocalGhost CLI Installer (Universal Linux)
+# https://github.com/xmrah/localghost
 #
 # What this script does:
 #   Quick Setup:  Checks deps, offers Ollama install, pulls a model, configures PATH
@@ -238,7 +238,7 @@ configure_path() {
 
     step "PATH Configuration"
     warn "$INSTALL_DIR is not in your PATH."
-    echo "  Without this, you'll need to type the full path to run locallocalghost."
+    echo "  Without this, you'll need to type the full path to run localghost."
     echo ""
 
     if ! ask "Add $INSTALL_DIR to your PATH automatically?"; then
