@@ -7,7 +7,7 @@ LocalGhost is a **local-only** tool. It communicates exclusively with `localhost
 ## What LocalGhost Does NOT Do
 
 - LocalGhost does **not** execute commands. It only prints them to stdout.
-- LocalGhost does **not** store or log your queries.
+- LocalGhost does **not** store or log your queries externally. Local command history is stored in `~/.local/share/localghost/` and auto-expires after 7 days. You can clear it anytime with `localghost --clear-history`.
 - LocalGhost does **not** make any network requests other than to your local Ollama instance.
 - LocalGhost does **not** require root/sudo privileges to install or run.
 

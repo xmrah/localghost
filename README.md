@@ -5,16 +5,17 @@
 
 ![Architecture](https://github.com/xmrah/localghost/blob/main/assets/demo.gif?raw=true)
 
-**LocalGhost** is a lightweight (~400 lines of Python) CLI tool that uses [Ollama](https://ollama.com) to translate natural language into Linux terminal commands.
+**LocalGhost** is a lightweight (~530 lines of Python) CLI tool that uses [Ollama](https://ollama.com) to translate natural language into Linux terminal commands.
 
 It is designed to be **safe, transparent, and distro-agnostic**. It works on NixOS, Arch, Debian, Fedora, and more.
 
 ## Why LocalGhost?
 
-- **🔒 Privacy First:** Runs incorrectly offline. No data leaves your machine.
+- **🔒 Privacy First:** Runs entirely offline. No data leaves your machine.
 - **🛡️ Safe:** Features a strict regex-based safety filter to block destructive commands (`rm -rf`, fork bombs, etc.).
 - **🐧 Hybrid:** Smartly detects your distro (NixOS vs Arch vs Debian) and hardware (AMD vs NVIDIA).
-- **⚡ Fast:** Written in pure Python standard library. No `pip install` required.ed
+- **🧠 Smart:** Detects tool aliases (`find`→`fd`, `ls`→`eza`) and remembers recent commands.
+- **⚡ Fast:** Written in pure Python standard library. No `pip install` required.
 - **Model-agnostic** — Works with any Ollama model (Gemma, Deepseek, Llama, Mistral, etc.)
 
 ## Supported Distributions
@@ -104,6 +105,10 @@ localghost "show gpu info"
 | `--help` | Show usage help |
 | `--version` | Show version |
 | `--models` | List available Ollama models |
+| `--env` | Show detected environment profile |
+| `--history` | Show recent command history |
+| `--clear-history` | Clear all command history |
+| `--refresh-env` | Force re-scan environment |
 
 ## Configuration
 
@@ -111,6 +116,7 @@ LocalGhost works out of the box, but you can configure it via environment variab
 
 ```bash
 export LOCALGHOST_OLLAMA_URL="http://127.0.0.1:11434"  # Default
+export LOCALGHOST_HISTORY_TTL="7"                       # History retention in days
 ```
 
 ## Safety & Privacy
@@ -147,7 +153,7 @@ export LOCALGHOST_OLLAMA_URL="http://127.0.0.1:11434"  # Default
 
 - LocalGhost communicates **only** with `localhost` (127.0.0.1)
 - No analytics, no telemetry, no crash reports
-- No data is stored between runs
+- Command history is stored locally in `~/.local/share/localghost/` (auto-expires, clearable)
 - Source code is fully auditable (single Python file)
 
 ## License
