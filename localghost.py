@@ -17,8 +17,19 @@ import shutil
 import subprocess
 import threading
 import time
+from datetime import datetime, timedelta
+from pathlib import Path
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
+
+# --- DATA DIRECTORY ---
+DATA_DIR = Path.home() / ".local" / "share" / "localghost"
+ENV_CACHE_FILE = DATA_DIR / "env.json"
+HISTORY_FILE = DATA_DIR / "history.json"
+ENV_CACHE_MAX_AGE = 86400  # 24 hours in seconds
+HISTORY_TTL_DAYS = int(os.environ.get("LOCALGHOST_HISTORY_TTL", "7"))
+HISTORY_MAX_ENTRIES = 100
+HISTORY_CONTEXT_COUNT = 5  # How many recent entries to inject into prompt
 
 # --- SETTINGS ---
 DEFAULT_MODEL = "gemma3:latest"
@@ -156,6 +167,111 @@ def get_hardware_info():
     return gpu_vendor, cpu_vendor
 
 
+def ensure_data_dir():
+    """Creates the data directory if it doesn't exist."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def detect_environment():
+    """Detects shell aliases and tool replacements.
+    Checks if common commands are actually modern replacements.
+    Results are cached in env.json for 24 hours."""
+
+    # Check cache freshness
+    if ENV_CACHE_FILE.exists():
+        try:
+            age = time.time() - ENV_CACHE_FILE.stat().st_mtime
+            if age < ENV_CACHE_MAX_AGE:
+                with open(ENV_CACHE_FILE, "r") as f:
+                    return json.load(f)
+        except Exception:
+            pass
+
+    env = {
+        "shell": os.environ.get("SHELL", "unknown"),
+        "aliases": {},
+        "detected_at": datetime.now().isoformat(),
+    }
+
+    # Detect common tool replacements via --version output
+    checks = {
+        "find": {"test": ["find", "--version"], "marker": "fd", "real": "fd"},
+        "ls": {"test": ["ls", "--version"], "marker": "eza", "real": "eza"},
+        "cat": {"test": ["cat", "--version"], "marker": "bat", "real": "bat"},
+        "grep": {"test": ["grep", "--version"], "marker": "ripgrep", "real": "rg"},
+    }
+
+    for cmd, info in checks.items():
+        try:
+            result = subprocess.run(
+                info["test"], capture_output=True, text=True, timeout=2
+            )
+            output = (result.stdout + result.stderr).lower()
+            if info["marker"] in output:
+                env["aliases"][cmd] = info["real"]
+        except Exception:
+            pass
+
+    # Save cache
+    ensure_data_dir()
+    try:
+        with open(ENV_CACHE_FILE, "w") as f:
+            json.dump(env, f, indent=2)
+    except Exception:
+        pass
+
+    return env
+
+
+def load_history():
+    """Loads command history, pruning expired entries."""
+    if not HISTORY_FILE.exists():
+        return []
+
+    try:
+        with open(HISTORY_FILE, "r") as f:
+            entries = json.load(f)
+    except Exception:
+        return []
+
+    # Prune expired entries
+    cutoff = (datetime.now() - timedelta(days=HISTORY_TTL_DAYS)).isoformat()
+    active = [e for e in entries if e.get("ts", "") >= cutoff]
+
+    # Enforce max entries
+    if len(active) > HISTORY_MAX_ENTRIES:
+        active = active[-HISTORY_MAX_ENTRIES:]
+
+    # Write back pruned list if changed
+    if len(active) != len(entries):
+        save_history(active)
+
+    return active
+
+
+def save_history(entries):
+    """Persists history to disk."""
+    ensure_data_dir()
+    try:
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(entries, f, indent=2)
+    except Exception:
+        pass
+
+
+def append_history(query, command):
+    """Appends a query-command pair to history."""
+    entries = load_history()
+    entries.append({
+        "ts": datetime.now().isoformat(),
+        "query": query,
+        "cmd": command,
+    })
+    if len(entries) > HISTORY_MAX_ENTRIES:
+        entries = entries[-HISTORY_MAX_ENTRIES:]
+    save_history(entries)
+
+
 def validate_command(command):
     """Checks if the first word of the command exists as a binary on the system."""
     # Extract the actual command (skip sudo, env, nix-shell prefixes)
@@ -250,28 +366,59 @@ def clean_response(raw_output):
 
 def print_help():
     """Prints usage information."""
-    print(f"# LocalGhost CLI (v{__version__})")
-    print("# https://github.com/xmrah/localghost")
-    print()
     print(f"\033[1mLocalGhost ({__version__}) - Local AI Terminal Assistant\033[0m")
     print("Usage: localghost [OPTIONS] \"YOUR QUERY\"")
     print()
     print("Options:")
-    print("  localghost <query>         Generate a command from natural language")
-    print("  localghost --help          Show this help message")
-    print("  localghost --version       Show version")
-    print("  localghost --models        List available Ollama models")
+    print("  <query>              Generate a command from natural language")
+    print("  --help               Show this help message")
+    print("  --version            Show version")
+    print("  --models             List available Ollama models")
+    print("  --history            Show recent command history")
+    print("  --env                Show detected environment profile")
+    print("  --clear-history      Clear all command history")
+    print("  --refresh-env        Force re-scan environment")
     print()
-    print("Environment:")
-    print(f"  LOCALGHOST_OLLAMA_URL           Ollama API URL (default: {OLLAMA_BASE_URL})")
+    print("Environment Variables:")
+    print(f"  LOCALGHOST_OLLAMA_URL       Ollama API URL (default: {OLLAMA_BASE_URL})")
+    print(f"  LOCALGHOST_HISTORY_TTL      History retention in days (default: 7)")
     print()
     print("Examples:")
     print('  localghost "update my system"')
     print('  localghost "find large files over 100MB"')
     print('  localghost "show disk usage"')
     print()
-    print("Safety: Dangerous commands (rm -rf, mkfs, dd) are flagged with warnings.")
-    print("Privacy: All processing happens locally via Ollama. No data is sent externally.")
+    print(f"Data: {DATA_DIR}")
+    print("Privacy: All processing happens locally. No data is sent externally.")
+
+
+def print_env():
+    """Displays detected environment profile."""
+    env = detect_environment()
+    print(f"\033[1mEnvironment Profile\033[0m")
+    print(f"  Shell: {env.get('shell', 'unknown')}")
+    print(f"  Detected: {env.get('detected_at', 'unknown')}")
+    aliases = env.get("aliases", {})
+    if aliases:
+        print(f"  Aliases:")
+        for orig, real in aliases.items():
+            print(f"    {orig} → {real}")
+    else:
+        print(f"  Aliases: none detected")
+    print(f"  Cache: {ENV_CACHE_FILE}")
+
+
+def print_history():
+    """Displays recent command history."""
+    entries = load_history()
+    if not entries:
+        print("No history yet.")
+        return
+    print(f"\033[1mCommand History ({len(entries)} entries, TTL: {HISTORY_TTL_DAYS} days)\033[0m")
+    for e in entries[-20:]:  # Show last 20
+        ts = e.get("ts", "")[:16].replace("T", " ")
+        print(f"  [{ts}] {e.get('query', '')}")
+        print(f"           → {e.get('cmd', '')}")
 
 
 def print_models():
@@ -303,6 +450,26 @@ def main():
     elif arg in ("--models", "--list-models"):
         print_models()
         sys.exit(0)
+    elif arg == "--history":
+        print_history()
+        sys.exit(0)
+    elif arg == "--env":
+        print_env()
+        sys.exit(0)
+    elif arg == "--clear-history":
+        if HISTORY_FILE.exists():
+            HISTORY_FILE.unlink()
+            print("✓ History cleared.")
+        else:
+            print("No history to clear.")
+        sys.exit(0)
+    elif arg == "--refresh-env":
+        if ENV_CACHE_FILE.exists():
+            ENV_CACHE_FILE.unlink()
+        env = detect_environment()
+        print("✓ Environment re-scanned.")
+        print_env()
+        sys.exit(0)
 
     # --- Main flow ---
     raw_query = " ".join(sys.argv[1:])
@@ -328,7 +495,24 @@ def main():
         hw_hints.append(f"CPU is {cpu_vendor.upper()}")
     hw_context = ". ".join(hw_hints) + "." if hw_hints else ""
 
-    # 2. Model Selection
+    # 2. Environment Profiling
+    env = detect_environment()
+    alias_hints = []
+    for orig, real in env.get("aliases", {}).items():
+        alias_hints.append(f"{orig} is actually {real} on this system — use {real} syntax")
+    env_context = ". ".join(alias_hints) + "." if alias_hints else ""
+
+    shell_name = os.path.basename(env.get("shell", "bash"))
+
+    # 3. History Context
+    history = load_history()
+    history_context = ""
+    if history:
+        recent = history[-HISTORY_CONTEXT_COUNT:]
+        history_lines = [f"Q: {e['query']} → A: {e['cmd']}" for e in recent]
+        history_context = f"Recent commands for context: {'; '.join(history_lines)}"
+
+    # 4. Model Selection
     available_models = get_available_models()
     selected_model = DEFAULT_MODEL
 
@@ -340,7 +524,7 @@ def main():
                 file=sys.stderr,
             )
 
-    # 3. Dynamic System Prompt
+    # 5. Dynamic System Prompt
     system_prompt = (
         "You are a Linux terminal command generator. "
         "Output ONLY a single shell command. No explanations, no markdown, no backticks. "
@@ -348,10 +532,13 @@ def main():
         "1. Use standard POSIX/GNU commands for file, directory, process, network, and disk operations. "
         f"2. For package management ONLY, use {distro_pkg} (this system runs {distro_name}). "
         f"3. Hardware: {hw_context} "
-        "4. Prefer built-in flags over pipes. "
-        "5. Never generate destructive commands unless explicitly asked. "
-        "6. If the request is ambiguous, choose the safest interpretation."
+        f"4. Environment: User shell is {shell_name}. {env_context} "
+        "5. Prefer built-in flags over pipes. "
+        "6. Never generate destructive commands unless explicitly asked. "
+        "7. If the request is ambiguous, choose the safest interpretation. "
     )
+    if history_context:
+        system_prompt += history_context
 
     payload = {
         "model": selected_model,
@@ -361,7 +548,7 @@ def main():
         "options": {"temperature": 0.2, "num_ctx": 2048},
     }
 
-    # 4. Send request with spinner
+    # 6. Send request with spinner
     stop_spinner = threading.Event()
     spinner = threading.Thread(target=spinner_task, args=(stop_spinner,), daemon=True)
 
@@ -394,6 +581,9 @@ def main():
                         if not cmd_exists:
                             print(f"\033[93m# Warning: '{missing}' not found on this system.\033[0m", file=sys.stderr)
                         print(final_cmd)
+
+                    # Save to history (even dangerous ones, for context)
+                    append_history(user_query, final_cmd)
                 else:
                     print("# Error: Model returned empty response.", file=sys.stderr)
             else:
