@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Ghost CLI Installer (Universal Linux)
-# https://github.com/xmrah/ghost
+# LocalLocalGhost CLI Installer (Universal Linux)
+# https://github.com/xmrah/locallocalghost
 #
 # What this script does:
 #   Quick Setup:  Checks deps, offers Ollama install, pulls a model, configures PATH
-#   Expert Setup: Just symlinks ghost.py → ~/.local/bin/ghost
+#   Expert Setup: Just symlinks localghost.py → ~/.local/bin/localghost
 #   --uninstall:  Removes the symlink and optionally cleans up
 #   --dry-run:    Shows what would happen without changing anything
 
 set -euo pipefail
 
 INSTALL_DIR="$HOME/.local/bin"
-SCRIPT_NAME="ghost"
+SCRIPT_NAME="localghost"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_FILE="$SCRIPT_DIR/ghost.py"
+SOURCE_FILE="$SCRIPT_DIR/localghost.py"
 DEFAULT_MODEL="gemma2:2b"
 
 # --- Colors ---
@@ -36,7 +36,7 @@ ask()   {
 
 header() {
     echo ""
-    echo -e "${BOLD}👻 Ghost CLI — Local AI Terminal Assistant${NC}"
+    echo -e "${BOLD}👻 LocalGhost CLI — Local AI Terminal Assistant${NC}"
     echo "==========================================="
     echo ""
 }
@@ -46,20 +46,20 @@ header() {
 # ============================================================
 do_uninstall() {
     header
-    echo "Uninstalling Ghost..."
+    echo "Uninstalling LocalGhost..."
     echo ""
 
     if [ -L "$INSTALL_DIR/$SCRIPT_NAME" ] || [ -f "$INSTALL_DIR/$SCRIPT_NAME" ]; then
         rm "$INSTALL_DIR/$SCRIPT_NAME"
         info "Removed $INSTALL_DIR/$SCRIPT_NAME"
     else
-        warn "Ghost is not installed at $INSTALL_DIR/$SCRIPT_NAME"
+        warn "LocalGhost is not installed at $INSTALL_DIR/$SCRIPT_NAME"
     fi
 
     echo ""
     if command -v ollama &>/dev/null; then
         echo "Ollama is still installed on your system."
-        echo "Ghost does not remove Ollama or its models."
+        echo "LocalGhost does not remove Ollama or its models."
         echo "To remove models manually: ollama rm <model-name>"
         echo "To remove Ollama: use your package manager."
     fi
@@ -129,7 +129,7 @@ offer_ollama_install() {
     distro=$(detect_distro)
 
     step "Ollama Installation"
-    echo "Ghost needs Ollama to run AI models locally."
+    echo "LocalGhost needs Ollama to run AI models locally."
     echo ""
 
     case "$distro" in
@@ -195,7 +195,7 @@ offer_model_pull() {
         return 0
     fi
 
-    echo "  No AI models found. Ghost needs at least one model."
+    echo "  No AI models found. LocalGhost needs at least one model."
     echo ""
     echo "  Recommended models:"
     echo "    [1] gemma2:2b    — Fast, small (1.6 GB) — Good for quick commands"
@@ -238,7 +238,7 @@ configure_path() {
 
     step "PATH Configuration"
     warn "$INSTALL_DIR is not in your PATH."
-    echo "  Without this, you'll need to type the full path to run ghost."
+    echo "  Without this, you'll need to type the full path to run locallocalghost."
     echo ""
 
     if ! ask "Add $INSTALL_DIR to your PATH automatically?"; then
@@ -277,10 +277,10 @@ configure_path() {
 }
 
 # ============================================================
-# INSTALL GHOST (symlink)
+# INSTALL LOCALGHOST (symlink)
 # ============================================================
-install_ghost() {
-    step "Installing Ghost"
+install_localghost() {
+    step "Installing LocalGhost"
 
     mkdir -p "$INSTALL_DIR"
 
@@ -339,14 +339,14 @@ quick_setup() {
         warn "Ollama is not installed."
         offer_ollama_install
 
-        if ask "Continue without Ollama? (Install it later before using Ghost)"; then
+        if ask "Continue without Ollama? (Install it later before using LocalGhost)"; then
             ollama_running=false
         else
             exit 1
         fi
     fi
 
-    install_ghost
+    install_localghost
 
     if [ "$ollama_running" = true ]; then
         offer_model_pull
@@ -361,7 +361,7 @@ quick_setup() {
 expert_setup() {
     step "Expert Mode"
     echo "  Skipping dependency checks. Installing symlink only."
-    install_ghost
+    install_localghost
     configure_path
     info "Done. You know what you're doing. 🤘"
 }
@@ -380,7 +380,7 @@ case "${1:-}" in
         echo "Options:"
         echo "  (none)       Interactive installer"
         echo "  --dry-run    Show what would happen"
-        echo "  --uninstall  Remove Ghost"
+        echo "  --uninstall  Remove LocalGhost"
         echo "  --help       Show this help"
         exit 0
         ;;
@@ -389,7 +389,7 @@ esac
 # Interactive mode
 header
 
-echo "How would you like to install Ghost?"
+echo "How would you like to install LocalGhost?"
 echo ""
 echo -e "  ${GREEN}[1]${NC} Quick Setup  — Guided installation (recommended for new users)"
 echo -e "  ${CYAN}[2]${NC} Expert Setup — Just the symlink, I'll handle the rest"
@@ -404,6 +404,6 @@ esac
 
 echo ""
 echo "==========================================="
-info "Ghost is ready! Try: ghost \"update my system\""
+info "LocalGhost is ready! Try: localghost \"update my system\""
 echo "==========================================="
 echo ""

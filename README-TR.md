@@ -1,17 +1,18 @@
-# Ghost CLI - Türkçe Kullanım Kılavuzu 🇹🇷
+# LocalLocalGhost CLI 👻
 
-Ghost, Linux terminalinizi yapay zeka ile güçlendiren **yerel** bir asistandır. İnternete ihtiyaç duymaz, verilerinizi dışarı göndermez ve kullandığınız dağıtıma uyum sağlar.
+> **Linux için Yerel Yapay Zeka Terminal Asistanı**
+> *Sıfır bağımlılık. %100 Gizlilik. Hibrit & Dağıtım Bağımsız.*
 
-## Ne Yapar?
+**LocalLocalGhost**, doğal dilde yazdığınız istekleri Linux terminal komutlarına dönüştüren, [Ollama](https://ollama.com) tabanlı hafif bir CLI aracıdır.
 
-Doğal dilde yazdığınız isteği terminal komutuna çevirir:
+**Güvenli, şeffaf ve dağıtım bağımsız** olacak şekilde tasarlanmıştır. NixOS, Arch, Debian, Fedora ve diğerlerinde sorunsuz çalışır.
 
-```bash
-ghost "sistemi güncelle"
-# NixOS  → sudo nixos-rebuild switch --upgrade
-# Arch   → sudo pacman -Syu
-# Debian → sudo apt update && sudo apt upgrade
-```
+## Özellikler
+
+- **🔒 Önce Gizlilik:** Tamamen yerel çalışır (offline). Verileriniz asla cihazınızdan çıkmaz.
+- **🛡️ Güvenli:** `rm -rf` gibi yıkıcı komutları engelleyen sıkı bir güvenlik filtresi vardır.
+- **🐧 Hibrit:** Dağıtımınızı (NixOS, Arch vb.) ve donanımınızı (AMD, NVIDIA) otomatik algılar.
+- **⚡ Hızlı:** Saf Python ile yazılmıştır. `pip install` gerektirmez.
 
 ## Kurulum
 
@@ -19,8 +20,8 @@ ghost "sistemi güncelle"
 
 ```bash
 # 1. İndir
-git clone https://github.com/xmrah/ghost.git
-cd ghost
+git clone https://github.com/xmrah/locallocalghost.git
+cd locallocalghost
 
 # 2. Kur (interaktif sihirbaz)
 ./install.sh
@@ -31,6 +32,7 @@ Kurulum sihirbazı iki mod sunar:
 - **Uzman Kurulum:** Sadece symlink, kontrol yok
 
 ```bash
+./install.sh --dry-run    # Ne yapacağını önceden gör
 ./install.sh --uninstall  # Temiz kaldırma
 ```
 
@@ -40,40 +42,44 @@ Hiçbir şey indirmeden veya kurmadan direkt çalıştırabilirsiniz:
 
 ```bash
 # GitHub üzerinden anında çalıştır
-nix run github:xmrah/ghost -- "sistemi güncelle"
+nix run github:xmrah/locallocalghost -- "sistemi güncelle"
 ```
 
 Veya geliştirme ortamına girmek için:
 
 ```bash
-git clone https://github.com/xmrah/ghost.git
-cd ghost
+git clone https://github.com/xmrah/locallocalghost.git
+cd locallocalghost
 nix develop
 ```
 
 ## Kullanım Örnekleri
 
 ```bash
-ghost "10 MB'dan büyük mp4 dosyalarını bul"
-ghost "açık portları listele"
-ghost "disk kullanımını göster"
-ghost "ekran kartı bilgisi"
+# Sistem güncelleme
+locallocalghost "sistemi güncelle"
+
+# Dosya bulma
+locallocalghost "500MB'dan büyük dosyaları bul"
+
+# Video sıkıştırma
+locallocalghost "video.mp4 dosyasını 720p olarak sıkıştır"
+
+# Donanım bilgisi
+locallocalghost "ekran kartı sıcaklığını göster"
 ```
 
 ## Güvenlik
 
-Ghost, tehlikeli komutları otomatik algılar ve uyarır:
+LocalLocalGhost **sadece komutu ekrana yazar**, asla otomatik çalıştırmaz. Yine de modelin ürettiği komutları çalıştırmadan önce gözden geçirmeniz önerilir.
 
-```
-$ ghost "her şeyi sil"
-⚠  DANGEROUS COMMAND DETECTED
-   Command: rm -rf /
+---
+MIT Lisansı © [xmrah](https://github.com/xmrah)nd: rm -rf /
    Review carefully before executing.
 ```
 
-**Ghost asla komut çalıştırmaz.** Sadece ekrana yazar. Çalıştırıp çalıştırmamak size kalmış.
+**LocalGhost asla komut çalıştırmaz.** Sadece ekrana yazar. Çalıştırıp çalıştırmamak size kalmış.
 
-## Gizlilik
 
 - Tüm işlem `localhost` (127.0.0.1) üzerinde yapılır
 - İnternet bağlantısı gerekmez
@@ -83,9 +89,9 @@ $ ghost "her şeyi sil"
 ## Mevcut Modeller
 
 ```bash
-ghost --models     # Yüklü modelleri gösterir
-ghost --help       # Yardım menüsü
-ghost --version    # Versiyon bilgisi
+localghost --models     # Yüklü modelleri gösterir
+localghost --help       # Yardım menüsü
+localghost --version    # Versiyon bilgisi
 ```
 
 ---

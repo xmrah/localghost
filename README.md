@@ -1,14 +1,20 @@
-# Ghost CLI
+# LocalLocalGhost CLI 👻
 
-**Local AI terminal assistant for Linux.** Translates natural language into terminal commands using your own hardware. No cloud, no telemetry, no internet required.
+> **Local AI Terminal Assistant for Linux**
+> *Zero dependencies. 100% Privacy. Hybrid & Distribution Agnostic.*
 
-> Ghost runs 100% locally via [Ollama](https://ollama.com). Your queries never leave your machine.
+![Architecture](https://github.com/xmrah/locallocalghost/blob/main/assets/demo.gif?raw=true)
 
-## Features
-- **Distro-aware** — Detects your Linux distribution and generates appropriate commands (`pacman`, `apt`, `dnf`, `nix`, etc.)
-- **Privacy-first** — All inference runs locally on your GPU/CPU via Ollama
-- **Safety-first** — Flags dangerous commands (`rm -rf`, `mkfs`, `curl | bash`) before you execute them
-- **Zero dependencies** — Pure Python 3 standard library, no `pip install` needed
+**LocalLocalGhost** is a lightweight (~400 lines of Python) CLI tool that uses [Ollama](https://ollama.com) to translate natural language into Linux terminal commands.
+
+It is designed to be **safe, transparent, and distro-agnostic**. It works on NixOS, Arch, Debian, Fedora, and more.
+
+## Why LocalLocalGhost?
+
+- **🔒 Privacy First:** Runs incorrectly offline. No data leaves your machine.
+- **🛡️ Safe:** Features a strict regex-based safety filter to block destructive commands (`rm -rf`, fork bombs, etc.).
+- **🐧 Hybrid:** Smartly detects your distro (NixOS vs Arch vs Debian) and hardware (AMD vs NVIDIA).
+- **⚡ Fast:** Written in pure Python standard library. No `pip install` required.ed
 - **Model-agnostic** — Works with any Ollama model (Gemma, Deepseek, Llama, Mistral, etc.)
 
 ## Supported Distributions
@@ -24,9 +30,14 @@ NixOS • Arch • Artix • Manjaro • EndeavourOS • Debian • Ubuntu • M
 
 ## Installation
 
+**Requirements:** Linux, Python 3.8+, [Ollama](https://ollama.com)
+
 ```bash
-git clone https://github.com/xmrah/ghost.git
-cd ghost
+# 1. Clone repo
+git clone https://github.com/xmrah/locallocalghost.git
+cd locallocalghost
+
+# 2. Run interactive installer
 ./install.sh
 ```
 
@@ -36,7 +47,7 @@ The interactive installer offers two modes:
 - Checks for Python 3 and Ollama
 - Offers to install Ollama if missing (distro-specific instructions)
 - Offers to pull a starter AI model
-- Symlinks `ghost.py` to `~/.local/bin/ghost`
+- Symlinks `locallocalghost.py` to `~/.local/bin/locallocalghost`
 - Configures your PATH automatically (fish/bash/zsh)
 
 **Expert Setup** (for experienced users):
@@ -51,19 +62,19 @@ The interactive installer offers two modes:
 
 ### NixOS Users (Zero-Install)
 
-Run Ghost instantly without cloning or installing anything:
+Run LocalLocalGhost instantly without cloning or installing anything:
 
 ```bash
 # Run directly from GitHub
-nix run github:xmrah/ghost -- "update my system"
+nix run github:xmrah/locallocalghost -- "update my system"
 ```
 
 Or start a development shell with all dependencies (Python 3, hardware tools):
 
 ```bash
 # Clone and enter dev environment
-git clone https://github.com/xmrah/ghost.git
-cd ghost
+git clone https://github.com/xmrah/locallocalghost.git
+cd locallocalghost
 nix develop
 ```
 
@@ -71,54 +82,52 @@ nix develop
 
 ```bash
 # System updates
-ghost "update my system"
+locallocalghost "update my system"
 #   NixOS  → sudo nixos-rebuild switch --upgrade
 #   Arch   → sudo pacman -Syu
-#   Debian → sudo apt update && sudo apt upgrade
+#   Debian → sudo apt update && sudo apt upgrade -y
 
-# Find files
-ghost "find all mp4 files larger than 100MB"
+# Complex finds
+locallocalghost "find all pdf files larger than 100MB modified in the last 7 days"
+#   → find . -name "*.pdf" -size +100M -mtime -7
 
-# System info
-ghost "show disk usage sorted by size"
-
-# Network
-ghost "list all open ports"
+# Hardware info (Context Aware)
+locallocalghost "show gpu info"
+#   AMD GPU → radeontop / sensors
+#   NVIDIA  → nvidia-smi
 ```
 
-## CLI Flags
+### Options
 
 | Flag | Description |
-|---|---|
-| `--help`, `-h` | Show usage information |
-| `--version`, `-v` | Print version |
+|------|-------------|
+| `--help` | Show usage help |
+| `--version` | Show version |
 | `--models` | List available Ollama models |
 
 ## Configuration
 
-| Environment Variable | Default | Description |
-|---|---|---|
-| `GHOST_OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama API endpoint |
+LocalLocalGhost works out of the box, but you can configure it via environment variables:
 
-## Safety
-
-Ghost includes a built-in safety filter that detects potentially destructive commands:
-
-```
-$ ghost "delete everything on the system"
-⚠  DANGEROUS COMMAND DETECTED
-   Pattern: rm\s+(-[a-z]*r[a-z]*\s+|--recursive).*(/|~|\$HOME)
-   Command: rm -rf /
-   Review carefully before executing.
+```bash
+export LOCALGHOST_OLLAMA_URL="http://127.0.0.1:11434"  # Default
 ```
 
-Ghost will **never** auto-execute commands. It only prints them. You decide what to run.
+## Safety & Privacy
+
+**LocalLocalGhost is designed to be safe.**
+
+1. **Read-Only by default:** It only *prints* commands. It never executes them automatically.
+2. **Safety Filter:** Blocks known destructive patterns like `rm -rf`, `/dev/sda` writes, etc.
+3. **Local Only:** Your queries never leave `localhost`.
+
+> ⚠️ **Disclaimer:** AI models can hallucinate. Always review the command before running it.
 
 ## How It Works
 
 ```
 ┌──────────────┐     ┌──────────┐     ┌───────────┐
-│ Your query   │────▶│ ghost.py │────▶│  Ollama   │
+│ Your query   │────▶│ localghost.py │────▶│  Ollama   │
 │ "update sys" │     │ (local)  │     │  (local)  │
 └──────────────┘     └────┬─────┘     └─────┬─────┘
                           │                 │
@@ -136,7 +145,7 @@ Ghost will **never** auto-execute commands. It only prints them. You decide what
 
 ## Privacy Statement
 
-- Ghost communicates **only** with `localhost` (127.0.0.1)
+- LocalGhost communicates **only** with `localhost` (127.0.0.1)
 - No analytics, no telemetry, no crash reports
 - No data is stored between runs
 - Source code is fully auditable (single Python file)
