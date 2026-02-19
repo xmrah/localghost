@@ -49,10 +49,15 @@ The interactive installer offers two modes:
 ./install.sh --help       # Show all options
 ```
 
-**NixOS users** can also use the provided `shell.nix`:
+**NixOS users** — run directly without installing:
 ```bash
-nix-shell
-python3 ghost.py "update system"
+# One-liner: no clone, no install
+nix run github:xmrah/ghost -- "update my system"
+
+# Or clone and use the dev shell
+git clone https://github.com/xmrah/ghost.git && cd ghost
+nix develop
+ghost "show disk usage"
 ```
 
 ## Usage
