@@ -73,27 +73,24 @@ localghost "ekran kartı sıcaklığını göster"
 
 LocalGhost **sadece komutu ekrana yazar**, asla otomatik çalıştırmaz. Yine de modelin ürettiği komutları çalıştırmadan önce gözden geçirmeniz önerilir.
 
----
-MIT Lisansı © [xmrah](https://github.com/xmrah)nd: rm -rf /
-   Review carefully before executing.
-```
-
-**LocalGhost asla komut çalıştırmaz.** Sadece ekrana yazar. Çalıştırıp çalıştırmamak size kalmış.
-
-
 - Tüm işlem `localhost` (127.0.0.1) üzerinde yapılır
 - İnternet bağlantısı gerekmez
 - Hiçbir veri kaydedilmez veya dışarı gönderilmez
 - Kaynak kodu tek bir Python dosyasından ibarettir, kendiniz inceleyebilirsiniz
 
-## Mevcut Modeller
+## CLI Komutları
 
 ```bash
-localghost --models     # Yüklü modelleri gösterir
-localghost --help       # Yardım menüsü
-localghost --version    # Versiyon bilgisi
+localghost --models          # Yüklü modelleri gösterir
+localghost --help            # Yardım menüsü
+localghost --version         # Versiyon bilgisi
+localghost --env             # Ortam profilini göster
+localghost --history         # Komut geçmişini göster
+localghost --clear-history   # Geçmişi temizle
 ```
 
 ---
+
+MIT Lisansı © [xmrah](https://github.com/xmrah)
 
 📖 [English README](README.md)
