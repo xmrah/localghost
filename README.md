@@ -49,15 +49,22 @@ The interactive installer offers two modes:
 ./install.sh --help       # Show all options
 ```
 
-**NixOS users** — run directly without installing:
-```bash
-# One-liner: no clone, no install
-nix run github:xmrah/ghost -- "update my system"
+### NixOS Users (Zero-Install)
 
-# Or clone and use the dev shell
-git clone https://github.com/xmrah/ghost.git && cd ghost
+Run Ghost instantly without cloning or installing anything:
+
+```bash
+# Run directly from GitHub
+nix run github:xmrah/ghost -- "update my system"
+```
+
+Or start a development shell with all dependencies (Python 3, hardware tools):
+
+```bash
+# Clone and enter dev environment
+git clone https://github.com/xmrah/ghost.git
+cd ghost
 nix develop
-ghost "show disk usage"
 ```
 
 ## Usage

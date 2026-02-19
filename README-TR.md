@@ -31,8 +31,24 @@ Kurulum sihirbazı iki mod sunar:
 - **Uzman Kurulum:** Sadece symlink, kontrol yok
 
 ```bash
-./install.sh --dry-run    # Ne yapacağını önceden gör
 ./install.sh --uninstall  # Temiz kaldırma
+```
+
+### NixOS Kullanıcıları (Kurulumsuz)
+
+Hiçbir şey indirmeden veya kurmadan direkt çalıştırabilirsiniz:
+
+```bash
+# GitHub üzerinden anında çalıştır
+nix run github:xmrah/ghost -- "sistemi güncelle"
+```
+
+Veya geliştirme ortamına girmek için:
+
+```bash
+git clone https://github.com/xmrah/ghost.git
+cd ghost
+nix develop
 ```
 
 ## Kullanım Örnekleri
