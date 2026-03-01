@@ -20,7 +20,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 # --- DATA DIRECTORY ---
 DATA_DIR = Path.home() / ".local" / "share" / "localghost"
@@ -107,7 +107,7 @@ def get_distro_info():
 
             # Map distro to its package manager
             pkg_map = {
-                "nixos": "nix/nixos-rebuild",
+                "nixos": "nixos-rebuild / nix",
                 "arch": "pacman",
                 "artix": "pacman",
                 "manjaro": "pacman",
@@ -499,7 +499,7 @@ def main():
     env = detect_environment()
     alias_hints = []
     for orig, real in env.get("aliases", {}).items():
-        alias_hints.append(f"{orig} is actually {real} on this system — use {real} syntax")
+        alias_hints.append(f"Modern replacement for {orig} is {real}")
     env_context = ". ".join(alias_hints) + "." if alias_hints else ""
 
     shell_name = os.path.basename(env.get("shell", "bash"))
@@ -526,26 +526,30 @@ def main():
 
     # 5. Dynamic System Prompt
     system_prompt = (
-        "You are a Linux terminal command generator. "
-        "Output ONLY a single shell command. No explanations, no markdown, no backticks. "
-        "Rules: "
-        "1. Use standard POSIX/GNU commands for file, directory, process, network, and disk operations. "
-        f"2. For package management ONLY, use {distro_pkg} (this system runs {distro_name}). "
-        f"3. Hardware: {hw_context} "
-        f"4. Environment: User shell is {shell_name}. {env_context} "
-        "5. Prefer built-in flags over pipes. "
-        "6. Never generate destructive commands unless explicitly asked. "
-        "7. If the request is ambiguous, choose the safest interpretation. "
+        "You are an expert Linux terminal command generator. Output ONLY the raw command. "
+        "EXAMPLES: "
+        "- User: 'git status' -> Command: git status "
+        "- User: 'find large files' -> Command: fd --size +500M "
+        "- User: 'update apps' -> Command: nix-env -u "
+        "- User: 'github push' -> Command: git push "
+        "- User: 'git komutları' -> Command: git --help "
+        "- User: 'nixos manuel güncelleme' -> Command: nix-env --upgrade '*' "
+        "\nRULES: "
+        "1. Prefer the specific tool's CLI (git, nix, docker) over search tools. "
+        "2. Use search tools (fd, find, rg) ONLY if the user wants to LOCATE files in the filesystem. "
+        f"3. Package Management ({distro_name}): Use {distro_pkg}. For user apps on NixOS, prefer 'nix-env' or 'nix profile'. "
+        "\nCONTEXT: "
+        f"Hardware: {hw_context} "
+        f"Aliases: {env_context} "
+        f"History: {history_context if history_context else 'None'}"
     )
-    if history_context:
-        system_prompt += history_context
 
     payload = {
         "model": selected_model,
         "prompt": user_query,
         "system": system_prompt,
         "stream": False,
-        "options": {"temperature": 0.2, "num_ctx": 2048},
+        "options": {"temperature": 0.4, "num_ctx": 2048},
     }
 
     # 6. Send request with spinner
