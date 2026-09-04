@@ -1,0 +1,49 @@
+[package]
+name = "localghost"
+version = "1.0.0"
+edition = "2021"
+description = "Local AI terminal assistant for Linux — privacy-first, distro-aware, Ollama-powered"
+license = "MIT"
+repository = "https://codeberg.org/xmrah/localghost"
+homepage = "https://codeberg.org/xmrah/localghost"
+keywords = ["ai", "cli", "ollama", "linux", "terminal"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "localghost"
+path = "src/main.rs"
+
+[dependencies]
+# CLI argument parsing
+clap = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+# HTTP client for Ollama API
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+# JSON serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Regex for safety filter
+regex = "1"
+# Home/config directory paths
+dirs = "5"
+# TOML config file
+toml = "0.8"
+# Date/time for history
+chrono = { version = "0.4", features = ["serde"] }
+# Terminal colors
+colored = "2"
+# Error handling
+anyhow = "1"
+# Async stream utilities
+futures-util = "0.3"
+# TUI
+ratatui = "0.29"
+crossterm = "0.28"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

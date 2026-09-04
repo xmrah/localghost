@@ -12,3 +12,8 @@ build/
 env/
 venv/
 .vscode/
+
+
+# Added by cargo
+
+/target

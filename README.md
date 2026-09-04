@@ -1,165 +1,78 @@
-# LocalGhost CLI 👻
+# 👻 LocalGhost v1.0
 
 > **Local AI Terminal Assistant for Linux**
-> *Zero dependencies. 100% Privacy. Hybrid & Distribution Agnostic.*
+> Doğal dili terminal komutlarına çeviren, tamamen çevrimdışı, gizlilik odaklı CLI ve TUI aracı.
 
-![Architecture](https://github.com/xmrah/localghost/blob/main/assets/demo.gif?raw=true)
+LocalGhost, makinenizde yerel olarak çalışan Ollama modellerini kullanarak doğal dildeki isteklerinizi (örneğin *"sistemi güncelle"*, *"büyük log dosyalarını bul"*) güvenli ve doğru kabuk komutlarına dönüştürür. Eski Python sürümünün (v0.8) tamamen **Rust** ile yeniden yazılmış halidir.
 
-**LocalGhost** is a lightweight (~530 lines of Python) CLI tool that uses [Ollama](https://ollama.com) to translate natural language into Linux terminal commands.
+## ✨ Özellikler
 
-It is designed to be **safe, transparent, and distro-agnostic**. It works on NixOS, Arch, Debian, Fedora, and more.
+- **Tamamen Çevrimdışı:** Verileriniz asla cihazınızdan çıkmaz. Tüm işlemler yerel ağınızdaki veya makinenizdeki Ollama üzerinden yürütülür.
+- **Sıfır Bağımlılık (Zero-dep):** Tek, statik derlenmiş bir Rust binary dosyasıdır. Python ortamlarına veya harici betiklere ihtiyaç duymaz.
+- **Yapılandırılmış Çıktı (Structured Output):** Komut üretiminde Markdown sızıntısı veya halüsinasyon riskini yok eder. LLM sadece komut döndürmeye zorlanır.
+- **TUI (İnteraktif Mod):** `localghost -i` komutuyla, komut geçmişini ve çıktıları tek ekranda görebileceğiniz Ratatui tabanlı tam ekran oturum moduna geçebilirsiniz.
+- **Güvenlik Filtresi:** Kötü niyetli veya yıkıcı komutları (`rm -rf /` vb.) çalıştırmadan önce yakalayan genişletilmiş bir regex güvenlik duvarı barındırır.
+- **Dağıtım (Distro) ve Donanım Farkındalığı:** Hangi Linux dağıtımında olduğunuzu, paket yöneticinizi (`nix`, `pacman`, `apt` vb.) ve donanımınızı (AMD/Nvidia/Intel) algılar; LLM'e bu bağlamı sağlar.
+- **Akıllı Çevre Profili:** Sisteminizde kurulu modern CLI araçlarını (`fd`, `eza`, `bat`, `rg`) otomatik algılar ve üretilen komutları bunlara göre iyileştirir.
+- **Açıklama Modu (`--explain`):** Üretilen komutu parça parça Türkçe açıklar.
 
-## Why LocalGhost?
+## 🚀 Kurulum
 
-- **🔒 Privacy First:** Runs entirely offline. No data leaves your machine.
-- **🛡️ Safe:** Features a strict regex-based safety filter to block destructive commands (`rm -rf`, fork bombs, etc.).
-- **🐧 Hybrid:** Smartly detects your distro (NixOS vs Arch vs Debian) and hardware (AMD vs NVIDIA).
-- **🧠 Smart:** Detects tool aliases (`find`→`fd`, `ls`→`eza`) and remembers recent commands.
-- **⚡ Fast:** Written in pure Python standard library. No `pip install` required.
-- **Model-agnostic** — Works with any Ollama model (Gemma, Deepseek, Llama, Mistral, etc.)
-
-## Supported Distributions
-NixOS • Arch • Artix • Manjaro • EndeavourOS • Debian • Ubuntu • Mint • Pop!_OS • Fedora • RHEL • CentOS • openSUSE • Void • Alpine • Gentoo
-
-## Requirements
-| Requirement | Notes |
-|---|---|
-| Linux | Any modern distribution with `/etc/os-release` |
-| Python 3.6+ | For f-string support |
-| [Ollama](https://ollama.com) | Running locally on port 11434 |
-| Any LLM model | `ollama pull gemma2:2b` (fast) or `ollama pull deepseek-r1:8b` (smart) |
-
-## Installation
-
-**Requirements:** Linux, Python 3.8+, [Ollama](https://ollama.com)
+NixOS kullanıcıları `flake.nix` üzerinden projeyi anında çalıştırabilir:
 
 ```bash
-# 1. Clone repo
-git clone https://github.com/xmrah/localghost.git
-cd localghost
-
-# 2. Run interactive installer
-./install.sh
+nix shell github:xmrah/localghost
+# veya projeyi klonladıktan sonra:
+nix run .#
 ```
 
-The interactive installer offers two modes:
-
-**Quick Setup** (recommended for new users):
-- Checks for Python 3 and Ollama
-- Offers to install Ollama if missing (distro-specific instructions)
-- Offers to pull a starter AI model
-- Symlinks `localghost.py` to `~/.local/bin/localghost`
-- Configures your PATH automatically (fish/bash/zsh)
-
-**Expert Setup** (for experienced users):
-- Just creates the symlink, no checks
-
+Eğer kaynak koddan (Source) derleyecekseniz:
 ```bash
-./install.sh              # Interactive wizard
-./install.sh --dry-run    # See what would happen
-./install.sh --uninstall  # Clean removal
-./install.sh --help       # Show all options
+cargo build --release
+sudo cp target/release/localghost /usr/local/bin/
 ```
 
-### NixOS Users (Zero-Install)
+## 💻 Kullanım
 
-Run LocalGhost instantly without cloning or installing anything:
-
+Sıradan bir komut istemek için:
 ```bash
-# Run directly from GitHub
-nix run github:xmrah/localghost -- "update my system"
+localghost "disk kullanımını göster"
 ```
 
-Or start a development shell with all dependencies (Python 3, hardware tools):
-
+Spesifik bir model (örneğin `qwen2.5-coder:7b`) kullanarak komut istemek için:
 ```bash
-# Clone and enter dev environment
-git clone https://github.com/xmrah/localghost.git
-cd localghost
-nix develop
+localghost -m qwen2.5-coder:7b "sistemi güncelle"
 ```
 
-## Usage
-
+### `--explain` (Açıklama Modu)
+Komutun ne işe yaradığını flag'leri ile birlikte detaylı görmek için:
 ```bash
-# System updates
-localghost "update my system"
-#   NixOS  → sudo nixos-rebuild switch --upgrade
-#   Arch   → sudo pacman -Syu
-#   Debian → sudo apt update && sudo apt upgrade -y
-
-# Complex finds
-localghost "find all pdf files larger than 100MB modified in the last 7 days"
-#   → find . -name "*.pdf" -size +100M -mtime -7
-
-# Hardware info (Context Aware)
-localghost "show gpu info"
-#   AMD GPU → radeontop / sensors
-#   NVIDIA  → nvidia-smi
+localghost --explain "son 5 gündeki büyük dosyaları bul"
 ```
 
-### Options
-
-| Flag | Description |
-|------|-------------|
-| `--help` | Show usage help |
-| `--version` | Show version |
-| `--models` | List available Ollama models |
-| `--env` | Show detected environment profile |
-| `--history` | Show recent command history |
-| `--clear-history` | Clear all command history |
-| `--refresh-env` | Force re-scan environment |
-
-## Configuration
-
-LocalGhost works out of the box, but you can configure it via environment variables:
-
+### İnteraktif Mod (TUI)
+Terminalinizde tam ekran bir asistan oturumu açmak için:
 ```bash
-export LOCALGHOST_OLLAMA_URL="http://127.0.0.1:11434"  # Default
-export LOCALGHOST_HISTORY_TTL="7"                       # History retention in days
+localghost -i
+# veya
+localghost interactive
 ```
 
-## Safety & Privacy
-
-**LocalGhost is designed to be safe.**
-
-1. **Read-Only by default:** It only *prints* commands. It never executes them automatically.
-2. **Safety Filter:** Blocks known destructive patterns like `rm -rf`, `/dev/sda` writes, etc.
-3. **Local Only:** Your queries never leave `localhost`.
-
-> ⚠️ **Disclaimer:** AI models can hallucinate. Always review the command before running it.
-
-## How It Works
-
-```
-┌──────────────┐     ┌──────────┐     ┌───────────┐
-│ Your query   │────▶│ localghost.py │────▶│  Ollama   │
-│ "update sys" │     │ (local)  │     │  (local)  │
-└──────────────┘     └────┬─────┘     └─────┬─────┘
-                          │                 │
-                          │◀────────────────┘
-                          │   raw LLM output
-                          ▼
-                    ┌─────────────┐
-                    │ Clean +     │
-                    │ Safety Check│
-                    └──────┬──────┘
-                           │
-                           ▼
-                    sudo pacman -Syu
+### Diğer Komutlar
+```bash
+localghost env            # Sisteminizde algılanan ortam araçlarını ve shell'i gösterir
+localghost models         # Ollama'daki yüklü modelleri listeler
+localghost history        # Komut geçmişini listeler
 ```
 
-## Privacy Statement
+## ⚙️ Yapılandırma
+İlk çalıştırmanın ardından `~/.config/localghost/config.toml` dosyası oluşur. Buradan varsayılan modelinizi ve komut geçmişi TTL (yaşam süresi) ayarlarınızı değiştirebilirsiniz.
 
-- LocalGhost communicates **only** with `localhost` (127.0.0.1)
-- No analytics, no telemetry, no crash reports
-- Command history is stored locally in `~/.local/share/localghost/` (auto-expires, clearable)
-- Source code is fully auditable (single Python file)
-
-## License
-
-MIT
+```toml
+[model]
+default = "qwen2.5-coder:7b"
+fallback = "qwen2.5vl:7b"
+```
 
 ---
-
-🇹🇷 [Türkçe Kullanım Kılavuzu](README-TR.md)
+**Not:** Önceki Python versiyonuna ulaşmak için git geçmişindeki `python-v0.8.1` etiketine (tag) bakabilirsiniz.
