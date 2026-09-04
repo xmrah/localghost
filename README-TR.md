@@ -94,3 +94,5 @@ localghost --clear-history   # Geçmişi temizle
 MIT Lisansı © [xmrah](https://github.com/xmrah)
 
 📖 [English README](README.md)
+
+

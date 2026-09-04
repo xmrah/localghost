@@ -526,18 +526,18 @@ def main():
 
     # 5. Dynamic System Prompt
     system_prompt = (
-        "You are an expert Linux terminal command generator. Output ONLY the raw command. "
+        f"You are an expert Linux terminal command generator running on {distro_name} ({distro_id}). "
+        "Output ONLY the raw command. DO NOT output any markdown formatting, backticks, explanations, or lists. "
         "EXAMPLES: "
         "- User: 'git status' -> Command: git status "
         "- User: 'find large files' -> Command: fd --size +500M "
-        "- User: 'update apps' -> Command: nix-env -u "
-        "- User: 'github push' -> Command: git push "
-        "- User: 'git komutları' -> Command: git --help "
-        "- User: 'nixos manuel güncelleme' -> Command: nix-env --upgrade '*' "
+        "- User: 'update apps' -> Command: nix profile upgrade '.*' "
+        "- User: 'nixos sistem güncelleme' -> Command: sudo nixos-rebuild switch --flake .# "
+        "- User: 'linux çekirdek güncelleme' -> Command: sudo nixos-rebuild switch --flake .# "
         "\nRULES: "
-        "1. Prefer the specific tool's CLI (git, nix, docker) over search tools. "
-        "2. Use search tools (fd, find, rg) ONLY if the user wants to LOCATE files in the filesystem. "
-        f"3. Package Management ({distro_name}): Use {distro_pkg}. For user apps on NixOS, prefer 'nix-env' or 'nix profile'. "
+        "1. Output exactly one line containing the valid shell command. "
+        "2. No conversational filler, no numbering, no markdown blocks. "
+        f"3. Package Management ({distro_name}): Use {distro_pkg}. For NixOS, prefer 'nixos-rebuild switch' or 'nix profile'. DO NOT USE 'apt' or 'dpkg' on NixOS. "
         "\nCONTEXT: "
         f"Hardware: {hw_context} "
         f"Aliases: {env_context} "
@@ -549,7 +549,7 @@ def main():
         "prompt": user_query,
         "system": system_prompt,
         "stream": False,
-        "options": {"temperature": 0.4, "num_ctx": 2048},
+        "options": {"temperature": 0.0, "num_ctx": 2048},
     }
 
     # 6. Send request with spinner
