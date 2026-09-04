@@ -54,8 +54,6 @@ localghost --explain "son 5 gündeki büyük dosyaları bul"
 Terminalinizde tam ekran bir asistan oturumu açmak için:
 ```bash
 localghost -i
-# veya
-localghost interactive
 ```
 
 ### Diğer Komutlar

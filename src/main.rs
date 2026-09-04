@@ -60,12 +60,11 @@ async fn main() -> Result<()> {
             cli::generate_completion(shell);
         }
 
-        Some(Commands::Interactive) => {
-            tui::run_interactive(&cli).await?;
-        }
-
         None => {
-            // Ana akış: sorgu al, komut üret
+            if cli.interactive {
+                tui::run_interactive(&cli).await?;
+            } else {
+                // Ana akış: sorgu al, komut üret
             let query = match &cli.query {
                 Some(q) if !q.trim().is_empty() => q.clone(),
                 _ => {
@@ -80,6 +79,7 @@ async fn main() -> Result<()> {
             };
 
             run_query(&cli, &query).await?;
+            }
         }
     }
 

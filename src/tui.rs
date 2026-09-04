@@ -89,6 +89,7 @@ pub async fn run_interactive(cli: &Cli) -> Result<()> {
         model: cli.model.clone(),
         explain: cli.explain,
         ollama_url: cli.ollama_url.clone(),
+        interactive: cli.interactive,
         command: None,
     };
 

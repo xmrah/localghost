@@ -35,6 +35,10 @@ pub struct Cli {
     )]
     pub ollama_url: String,
 
+    /// İnteraktif TUI modunu başlat
+    #[arg(short = 'i', long, help = "İnteraktif TUI modunu başlat")]
+    pub interactive: bool,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
@@ -55,10 +59,6 @@ pub enum Commands {
 
     /// Ortam profilini yeniden tara
     RefreshEnv,
-
-    /// İnteraktif TUI modunu başlat
-    #[command(name = "interactive", alias = "i")]
-    Interactive,
 
     /// Shell completion scripti oluştur
     GenerateCompletion {
