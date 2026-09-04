@@ -1,85 +1,78 @@
-use regex::Regex;
-use std::process::Command;
+use std::collections::HashSet;
 
-/// Tehlikeli komut kalıpları — Python versiyonundan port edildi ve genişletildi
-const DANGEROUS_PATTERNS: &[&str] = &[
-    // Recursive/forced deletion
-    r"rm\s+.*(-[a-z]*r|-[a-z]*f|--recursive|--force).*(/|~|\$HOME)",
-    r"rm\s+(-rf|-fr)\b",
-    // Disk formatting / raw writes
-    r"mkfs\b",
-    r"dd\s+.*(if|of)=.*/dev/",
-    r"wipefs\b",
-    r"fdisk\s+/dev/",
-    r"parted\s+/dev/",
-    r"sgdisk\s+/dev/",
-    // Fork bombs
-    r":\(\)\{.*:\|:",
-    r"\.\s*\(\)\s*\{.*\|",
-    // Block device overwrite
-    r">\s*/dev/(sd|nvme|vd|hd|loop)",
-    // Dangerous permissions
-    r"chmod\s+(-[a-z]*\s+)?777\s+/",
-    r"chmod\s+(-[a-z]*\s+)?(777|666)\s+/etc",
-    r"chown\s+.*\s+/\s",
-    r"chown\s+.*\s+/$",
-    // Moving/overwriting root
-    r"mv\s+/\s",
-    r"mv\s+/$",
-    // Remote code execution via pipe
-    r"(curl|wget)\s+.*\|\s*(sudo\s+)?(bash|sh|zsh|python|perl|ruby)",
-    r"(curl|wget)\s+.*-o\s*-\s*\|",
-    // eval/exec with variables
-    r"eval\s+\$",
-    r#"eval\s+['"].*\$"#,
-    r"exec\s+\$",
-    // Python/Perl attacks
-    r"python[23]?\s+-c\s+.*os\.(system|remove|unlink|rmdir)",
-    r"perl\s+-e\s+.*unlink",
-    // History manipulation
-    r"history\s+-c",
-    r"shred.*\.(bash_history|zsh_history|fish_history)",
-    // Critical system files
-    r"rm\s+.*/boot/",
-    r"rm\s+.*/etc/(passwd|shadow|fstab|sudoers)",
-    // NixOS specific
-    r"nix-store\s+--delete\s+/nix/store",
-    r"rm\s+-rf\s+/nix",
-];
-
-pub fn check(command: &str) -> (bool, Option<String>) {
-    for pattern in DANGEROUS_PATTERNS {
-        let Ok(re) = Regex::new(pattern) else { continue };
-        if re.is_match_at(command, 0) || re.is_match(&command.to_lowercase()) {
-            return (false, Some(pattern.to_string()));
-        }
-    }
-    (true, None)
+#[derive(Debug, PartialEq, Eq)]
+pub enum ExecutionTier {
+    Tier0AutoExec,
+    Tier1ConfirmRequired(String), // İhtiyaç duyulan onayın nedeni
 }
 
-/// Komutun ilk binary'sinin sistemde var olup olmadığını kontrol et
-pub fn validate_binary(command: &str) -> Option<String> {
-    let skip = ["sudo", "env", "nix-shell", "doas", "pkexec", "time", "nice"];
+pub fn analyze_command(cmd: &str) -> ExecutionTier {
+    let cmd = cmd.trim();
 
-    let parts: Vec<&str> = command.split_whitespace().collect();
-    let cmd_name = parts.iter().find(|p| {
-        !p.starts_with('-') && !skip.contains(p) && !p.contains('=')
-    })?;
+    // 1. Metacharacter Kontrolü (Shell Injection Risk)
+    // Bu karakterlerin varlığı komutun bir shell tarafından (sh -c) çalıştırılmasını zorunlu kılar.
+    // Bu yüzden asla Tier-0 olarak doğrudan çalıştırılamazlar, onaya düşerler.
+    let metachars = [";", "|", "&", "<", ">", "$", "`", "\n"];
+    for ch in metachars.iter() {
+        if cmd.contains(ch) {
+            return ExecutionTier::Tier1ConfirmRequired(format!("Shell metakarakteri tespit edildi: '{}'", ch));
+        }
+    }
 
-    // Pipeline'daki ilk komutu al
-    let cmd_name = cmd_name.split('|').next()?.trim();
-    let cmd_name = cmd_name.split(';').next()?.trim();
-    let cmd_name = cmd_name.split("&&").next()?.trim();
+    // 2. Tokenizer (Argv ayrıştırma)
+    let argv = match shell_words::split(cmd) {
+        Ok(args) if !args.is_empty() => args,
+        _ => return ExecutionTier::Tier1ConfirmRequired("Komut parse edilemedi veya boş".into()),
+    };
+    
+    let binary = &argv[0];
 
-    // which ile kontrol
-    let output = Command::new("sh")
-        .args(["-c", &format!("command -v {}", cmd_name)])
-        .output()
-        .ok()?;
+    // 3. Allowlist (Salt Okunur ve Zararsız Komutlar)
+    let mut allowlist = HashSet::new();
+    let safe_bins = vec![
+        "ls", "cat", "echo", "pwd", "date", "whoami", "uname", "uptime", "free", "df",
+        "top", "htop", "btm", "neofetch", "fastfetch", "ps", "grep", "awk", "sed",
+        "head", "tail", "less", "more", "find", "fd", "rg", "bat", "eza", "exa",
+        "ip", "ping", "netstat", "ss", "nmap", "curl", "wget", "dig", "host",
+        "systemctl", "journalctl", "dmesg", "lsblk", "lscpu", "lspci", "lsusb",
+        "stat", "file", "which", "whereis", "type", "history", "clear", "which"
+    ];
+    for bin in safe_bins {
+        allowlist.insert(bin);
+    }
+    
+    // systemctl için sadece 'status' argümanı güvenlidir
+    let is_safe_systemctl = binary == "systemctl" && argv.len() >= 2 && argv[1] == "status";
+    
+    if !allowlist.contains(binary.as_str()) && !is_safe_systemctl && binary != "journalctl" {
+        return ExecutionTier::Tier1ConfirmRequired(format!("Binary allowlist'te yok: '{}'", binary));
+    }
 
-    if output.status.success() {
-        None
-    } else {
-        Some(cmd_name.to_string())
+    // 4. Path-Sensitivity (Veri Sızıntısı Kontrolü)
+    // Sadece okuma bile yapsa, hassas verilere erişenler onaylanmalıdır.
+    let sensitive_paths = [
+        "/etc/shadow", "/etc/passwd", "/etc/sudoers",
+        ".ssh", "id_rsa", "id_ed25519", "authorized_keys",
+        ".gnupg", "gpg", "age", "sops",
+        ".aws/credentials", ".kube/config", ".env"
+    ];
+
+    for arg in &argv[1..] {
+        for path in sensitive_paths.iter() {
+            if arg.contains(path) {
+                return ExecutionTier::Tier1ConfirmRequired(format!("Hassas veri/yol erişimi tespit edildi: '{}'", path));
+            }
+        }
+    }
+
+    // Tüm testlerden geçerse, şüphesiz güvenlidir ve shell'siz (argv) çalıştırılabilir.
+    ExecutionTier::Tier0AutoExec
+}
+
+/// Geriye dönük uyumluluk (TUI için)
+pub fn is_dangerous(cmd: &str) -> bool {
+    match analyze_command(cmd) {
+        ExecutionTier::Tier1ConfirmRequired(_) => true,
+        ExecutionTier::Tier0AutoExec => false,
     }
 }

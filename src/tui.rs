@@ -34,6 +34,7 @@ struct App {
     state: AppState,
     scroll: u16,
     cli: Cli,
+    execute_requested: bool,
 }
 
 impl App {
@@ -56,6 +57,7 @@ impl App {
             state: AppState::Idle,
             scroll: 0,
             cli,
+            execute_requested: false,
         })
     }
 
@@ -77,7 +79,7 @@ impl App {
     }
 }
 
-pub async fn run_interactive(cli: &Cli) -> Result<()> {
+pub async fn run_interactive(cli: &Cli) -> Result<(Option<String>, bool, Option<String>)> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -90,11 +92,13 @@ pub async fn run_interactive(cli: &Cli) -> Result<()> {
         explain: cli.explain,
         ollama_url: cli.ollama_url.clone(),
         interactive: cli.interactive,
+        execute: cli.execute,
         command: None,
+        execute_requested: false,
     };
 
     let mut app = App::new(cli_clone)?;
-    let res = run_app(&mut terminal, &mut app).await;
+    let _ = run_app(&mut terminal, &mut app).await;
 
     disable_raw_mode()?;
     execute!(
@@ -104,7 +108,11 @@ pub async fn run_interactive(cli: &Cli) -> Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    res
+    if app.execute_requested {
+        Ok((app.result.clone(), app.result_safe, app.explanation.clone()))
+    } else {
+        Ok((None, false, None))
+    }
 }
 
 async fn run_app<B: ratatui::backend::Backend>(
@@ -158,6 +166,12 @@ async fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
 
+                    // Execute (Çalıştır) komutu
+                    KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) && app.state == AppState::ShowResult => {
+                        app.execute_requested = true;
+                        return Ok(());
+                    }
+
                     // Yeni sorgu (sonuç ekranından)
                     KeyCode::Enter if app.state == AppState::ShowResult => {
                         app.state = AppState::Idle;
@@ -209,7 +223,7 @@ async fn process_query(
         app.cli.explain,
     ).await?;
 
-    let (is_safe, _) = safety::check(&result.command);
+    let is_safe = !safety::is_dangerous(&result.command);
     Ok((result.command, is_safe, result.explanation))
 }
 

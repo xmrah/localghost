@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod distro;
 mod env_profile;
+mod exec;
 mod hardware;
 mod history;
 mod ollama;
@@ -62,7 +63,10 @@ async fn main() -> Result<()> {
 
         None => {
             if cli.interactive {
-                tui::run_interactive(&cli).await?;
+                let (cmd_opt, _, _) = tui::run_interactive(&cli).await?;
+                if let Some(cmd) = cmd_opt {
+                    exec::execute_command(&cmd)?;
+                }
             } else {
                 // Ana akış: sorgu al, komut üret
             let query = match &cli.query {
@@ -131,24 +135,30 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
 
     // Güvenlik kontrolü
     let cmd = &result.command;
-    let (is_safe, pattern) = safety::check(cmd);
+    let tier = safety::analyze_command(cmd);
 
-    if !is_safe {
-        output::danger_box(cmd, pattern.as_deref().unwrap_or(""));
-    } else {
-        // Binary var mı kontrol et
-        if let Some(missing) = safety::validate_binary(cmd) {
-            output::warn(&format!("'{}' bu sistemde bulunamadı.", missing));
+    match tier {
+        safety::ExecutionTier::Tier1ConfirmRequired(reason) => {
+            output::danger_box(cmd, &reason);
         }
-
-        if cli.explain {
-            output::explain_box(cmd, &result.explanation.unwrap_or_default());
-        } else {
-            println!("{}", cmd);
+        safety::ExecutionTier::Tier0AutoExec => {
+            // Komutu göster
+            println!("\n> \x1b[1;32m{}\x1b[0m\n", cmd);
         }
+    }
 
-        // Geçmişe kaydet
-        history::append(&query, &cmd)?;
+    if cli.explain {
+        if let Some(expl) = result.explanation {
+            println!("📖 Açıklama:\n   {}\n", expl.replace("\n", "\n   "));
+        }
+    }
+
+    // Geçmişe kaydet
+    history::append(&query, &cmd)?;
+    
+    // Execute modundaysak çalıştır (execute_command zaten Tier'a göre davranır)
+    if cli.execute {
+        exec::execute_command(&cmd)?;
     }
 
     Ok(())

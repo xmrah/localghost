@@ -39,6 +39,10 @@ pub struct Cli {
     #[arg(short = 'i', long, help = "İnteraktif TUI modunu başlat")]
     pub interactive: bool,
 
+    /// Üretilen komutu güvenli bir şekilde çalıştırır (Execution Layer)
+    #[arg(short = 'x', long, help = "Üretilen komutu çalıştır")]
+    pub execute: bool,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }
