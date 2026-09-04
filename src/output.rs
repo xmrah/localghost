@@ -52,6 +52,7 @@ pub fn explain_box(command: &str, explanation: &str) {
 }
 
 /// Spinner — async ile birlikte kullan
+#[allow(dead_code)]
 pub async fn with_spinner<F, T>(msg: &str, fut: F) -> T
 where
     F: std::future::Future<Output = T>,

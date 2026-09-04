@@ -20,6 +20,7 @@ struct GenerateOptions {
     num_ctx: u32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct GenerateResult {
     pub command: String,
@@ -27,6 +28,7 @@ pub struct GenerateResult {
     pub risk_level: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct OllamaResponse {
     response: Option<String>,
@@ -130,6 +132,7 @@ pub async fn generate(
 }
 
 /// Streaming ile gerçek zamanlı token akışı (interaktif mod için)
+#[allow(dead_code)]
 pub async fn generate_streaming<F>(
     base_url: &str,
     model: &str,

@@ -76,6 +76,7 @@ pub fn load() -> Result<Config> {
     Ok(config)
 }
 
+#[allow(dead_code)]
 pub fn save(config: &Config) -> Result<()> {
     let path = config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))
@@ -90,6 +91,7 @@ pub fn save(config: &Config) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn config_path() -> std::path::PathBuf {
     config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))

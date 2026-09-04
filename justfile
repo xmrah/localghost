@@ -36,6 +36,9 @@ clean:
 nix-build:
     nix build .#
 
-# Hızlıca Git Push yap
-push:
-    git push
+# Özel commit mesajı ile Git Push yap (Örn: just push "fix: unused warnings kaldırıldı")
+push msg="update":
+    git add .
+    git commit -m "{{msg}}" || true
+    git push origin main
+    git push github main
