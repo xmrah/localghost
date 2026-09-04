@@ -51,6 +51,7 @@
             openssl
             pciutils
             gcc
+            just
           ];
 
           shellHook = ''
