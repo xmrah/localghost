@@ -26,25 +26,34 @@ pub fn analyze_command(cmd: &str) -> ExecutionTier {
     
     let binary = &argv[0];
 
-    // 3. Allowlist (GTFOBins Korumalı, SADECE Saf Okuyucular)
-    let mut allowlist = HashSet::new();
-    let safe_bins = vec![
-        "ls", "cat", "echo", "pwd", "date", "whoami", "uname", "uptime", "free", "df",
-        "ps", "grep", "head", "tail", "ip", "ping", "netstat", "ss",
-        "systemctl", "journalctl", "dmesg", "lsblk", "lscpu", "lspci", "lsusb",
-        "stat", "file", "which", "whereis", "type", "history", "clear",
-        "bat", "eza", "exa", "fd", "rg", "neofetch", "fastfetch"
-        // GTFOBins çıkırılanlar: find, awk, sed, less, more, nmap, curl, wget, top, htop, btm
+    // 3. Denylist (Kara Liste) Modeli
+    let mut denylist = HashSet::new();
+    let dangerous_bins = vec![
+        // Dosya/Dizin Silme ve Taşıma
+        "rm", "mv", "cp", "dd", "shred", "wipe",
+        // Sistem ve Disk Yönetimi
+        "mkfs", "fdisk", "parted", "mount", "umount", "chroot",
+        // Yetki Yönetimi ve İzinler
+        "chmod", "chown", "chgrp", "su", "sudo", "pkexec", "doas", "passwd",
+        // Süreç Yönetimi (Zararlı olabilir)
+        "kill", "killall", "pkill",
+        // Ağ Araçları (İndirme/Dinleme riski)
+        "wget", "curl", "nc", "netcat", "nmap",
+        // Paket Yöneticileri (Kurulum/Kaldırma onaysız olmamalı)
+        "apt", "pacman", "nix", "nix-env", "nixos-rebuild", "dnf", "yum", "zypper", "apk",
+        // Güç Yönetimi
+        "reboot", "shutdown", "poweroff", "halt"
     ];
     
-    for bin in safe_bins {
-        allowlist.insert(bin);
+    for bin in dangerous_bins {
+        denylist.insert(bin);
     }
     
     let is_safe_systemctl = binary == "systemctl" && argv.len() >= 2 && argv[1] == "status";
+    let is_dangerous_systemctl = binary == "systemctl" && !is_safe_systemctl;
     
-    if !allowlist.contains(binary.as_str()) && !is_safe_systemctl && binary != "journalctl" {
-        return ExecutionTier::Tier1ConfirmRequired(format!("Binary allowlist'te yok veya GTFOBins riski taşıyor: '{}'", binary));
+    if denylist.contains(binary.as_str()) || is_dangerous_systemctl {
+        return ExecutionTier::Tier1ConfirmRequired(format!("Sistem durumunu değiştirebilecek komut tespit edildi: '{}'", binary));
     }
 
     // 4. Path-Sensitivity: Zero-Trust (Default-Deny) Modeli
