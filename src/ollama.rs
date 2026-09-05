@@ -10,7 +10,6 @@ struct GenerateRequest<'a> {
     prompt: &'a str,
     system: &'a str,
     stream: bool,
-    format: Value,
     options: GenerateOptions,
 }
 
@@ -87,7 +86,6 @@ pub async fn generate(
         prompt,
         system,
         stream: false,
-        format: format_schema,
         options: GenerateOptions {
             temperature: 0.0,
             num_ctx: 2048,
@@ -110,8 +108,15 @@ pub async fn generate(
     let raw = ollama_resp.response
         .ok_or_else(|| anyhow!("Ollama boş yanıt döndürdü"))?;
 
+    // Markdown blocklarını temizle ve JSON'u çıkar
+    let json_str = if let (Some(start), Some(end)) = (raw.find('{'), raw.rfind('}')) {
+        if start <= end { &raw[start..=end] } else { &raw }
+    } else {
+        &raw
+    };
+
     // JSON parse et
-    let parsed: serde_json::Map<String, Value> = serde_json::from_str(&raw)
+    let parsed: serde_json::Map<String, Value> = serde_json::from_str(json_str)
         .map_err(|e| anyhow!("JSON parse hatası: {}\nHam yanıt: {}", e, raw))?;
 
     let command = parsed.get("command")

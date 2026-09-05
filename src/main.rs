@@ -38,6 +38,28 @@ async fn main() -> Result<()> {
             }
         }
 
+        Some(Commands::SelectModel) => {
+            let models = ollama::list_models(&cli.ollama_url).await?;
+            if models.is_empty() {
+                crate::output::warn("Ollama'da yüklü model bulunamadı!");
+                return Ok(());
+            }
+
+            let selection = dialoguer::Select::new()
+                .with_prompt("Varsayılan olarak kullanmak istediğiniz modeli seçin")
+                .items(&models)
+                .default(0)
+                .interact()?;
+
+            let selected = &models[selection];
+            
+            let mut config = config::load()?;
+            config.model.default = selected.clone();
+            config::save(&config)?;
+            
+            crate::output::success(&format!("Varsayılan model '{}' olarak ayarlandı!", selected));
+        }
+
         Some(Commands::History) => {
             history::print_history()?;
         }
@@ -206,7 +228,8 @@ fn build_system_prompt(
             1. Output ONLY valid JSON. \
             2. The command field must contain ONE valid shell command, no explanations, no markdown. \
             3. Use {pkg} for package management. For NixOS use nixos-rebuild or nix profile, NEVER apt/dpkg. \
-            4. EXAMPLES: \
+            4. STRICT RULE: DO NOT generate commands with placeholders (like /path/to/dir, <file>, etc). If the user request is missing required specific information (like a filename or directory), your command MUST be an echo statement asking for the missing info. Example: echo 'Lütfen silinecek dosyanın adını belirtin.' \
+            5. EXAMPLES: \
             Q: update system → {{\"command\": \"sudo nixos-rebuild switch --upgrade\", \"risk_level\": \"safe\"}} \
             Q: find large files → {{\"command\": \"fd --size +500M\", \"risk_level\": \"safe\"}} \
             CONTEXT: Hardware: {hw}. Aliases: {alias}. Recent: {hist}.",

@@ -52,6 +52,9 @@ pub enum Commands {
     /// Mevcut Ollama modellerini listele
     Models,
 
+    /// Varsayılan Ollama modelini interaktif olarak seç
+    SelectModel,
+
     /// Komut geçmişini göster
     History,
 
