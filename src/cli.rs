@@ -30,6 +30,10 @@ pub struct Cli {
     #[arg(short = 'f', long = "file", help = "Komut üretilirken bağlam (context) olarak okunacak dosya")]
     pub file: Option<String>,
 
+    /// Özel rol (prompt) profili kullan
+    #[arg(short = 'r', long = "role", help = "Kullanılacak profil (Örn: arch_uzmani)")]
+    pub role: Option<String>,
+
     /// Ollama API URL
     #[arg(
         long,

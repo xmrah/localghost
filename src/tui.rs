@@ -95,6 +95,7 @@ pub async fn run_interactive(cli: &Cli) -> Result<(Option<String>, bool, Option<
         execute: cli.execute,
         command: None,
         file: cli.file.clone(),
+        role: cli.role.clone(),
     };
 
     let mut app = App::new(cli_clone)?;

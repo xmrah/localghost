@@ -162,7 +162,21 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     };
 
     // Prompt oluştur
-    let system_prompt = build_system_prompt(&distro, &hw, &env, &hist, cli.explain);
+    let mut system_prompt = build_system_prompt(&distro, &hw, &env, &hist, cli.explain);
+
+    if let Some(role_name) = &cli.role {
+        if let Some(config_dir) = dirs::config_dir() {
+            let role_path = config_dir.join("localghost").join("roles").join(format!("{}.txt", role_name));
+            if role_path.exists() {
+                if let Ok(role_content) = std::fs::read_to_string(&role_path) {
+                    system_prompt.push_str("\n\n[KULLANICI ÖZEL ROL/PROFİL TALİMATI]:\n");
+                    system_prompt.push_str(&role_content);
+                }
+            } else {
+                crate::output::warn(&format!("Rol dosyası bulunamadı: {:?}. Lütfen dosyayı oluşturun.", role_path));
+            }
+        }
+    }
 
     // Ollama'ya sor
     let result = ollama::generate(
