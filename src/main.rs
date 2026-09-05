@@ -121,7 +121,20 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     let config = config::load()?;
 
     // Sorguyu temizle ve kısalt
-    let query = sanitize_query(query, 500);
+    let original_query = sanitize_query(query, 500);
+
+    let final_query = match &cli.file {
+        Some(filepath) => {
+            match std::fs::read_to_string(filepath) {
+                Ok(content) => format!("{}\n\n[AŞAĞIDAKİ DOSYA İÇERİĞİNİ BAZ AL]: {}\n```\n{}\n```", original_query, filepath, content),
+                Err(e) => {
+                    crate::output::warn(&format!("Dosya okunamadı ({}): {}", filepath, e));
+                    return Ok(());
+                }
+            }
+        },
+        None => original_query.clone(),
+    };
 
     // Sistem bilgisi topla
     let distro = distro::detect();
@@ -155,7 +168,7 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     let result = ollama::generate(
         &cli.ollama_url,
         &selected_model,
-        &query,
+        &final_query,
         &system_prompt,
         cli.explain,
     ).await?;
@@ -181,7 +194,7 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     }
 
     // Geçmişe kaydet
-    history::append(&query, &cmd)?;
+    history::append(&original_query, &cmd)?;
     
     // Execute modundaysak çalıştır (execute_command zaten Tier'a göre davranır)
     if cli.execute {

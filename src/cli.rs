@@ -26,6 +26,10 @@ pub struct Cli {
     #[arg(short = 'e', long, help = "Her flag ve argümanı açıklar")]
     pub explain: bool,
 
+    /// Dosya bağlamı
+    #[arg(short = 'f', long = "file", help = "Komut üretilirken bağlam (context) olarak okunacak dosya")]
+    pub file: Option<String>,
+
     /// Ollama API URL
     #[arg(
         long,
