@@ -55,6 +55,12 @@ pub enum Commands {
     /// Varsayılan Ollama modelini interaktif olarak seç
     SelectModel,
 
+    /// Shell entegrasyonu kur (kısayol kullanımı için)
+    Install {
+        #[arg(help = "Hangi shell'e kurulacak? (fish, bash, zsh)")]
+        shell: Option<String>,
+    },
+
     /// Komut geçmişini göster
     History,
 

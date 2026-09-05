@@ -8,6 +8,7 @@ mod history;
 mod ollama;
 mod output;
 mod safety;
+mod integration;
 mod tui;
 
 use anyhow::Result;
@@ -58,6 +59,10 @@ async fn main() -> Result<()> {
             config::save(&config)?;
             
             crate::output::success(&format!("Varsayılan model '{}' olarak ayarlandı!", selected));
+        }
+
+        Some(Commands::Install { shell }) => {
+            crate::integration::install(shell.as_deref())?;
         }
 
         Some(Commands::History) => {
