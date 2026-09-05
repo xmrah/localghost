@@ -1,4 +1,4 @@
-# 👻 LocalGhost v1.0
+# 👻 LocalGhost v1.2
 
 > **Local AI Terminal Assistant for Linux**
 > Doğal dili terminal komutlarına çeviren, tamamen çevrimdışı, gizlilik odaklı CLI ve TUI aracı.
@@ -11,7 +11,7 @@ LocalGhost, makinenizde yerel olarak çalışan Ollama modellerini kullanarak do
 - **Sıfır Bağımlılık (Zero-dep):** Tek, statik derlenmiş bir Rust binary dosyasıdır. Python ortamlarına veya harici betiklere ihtiyaç duymaz.
 - **Yapılandırılmış Çıktı (Structured Output):** Komut üretiminde Markdown sızıntısı veya halüsinasyon riskini yok eder. LLM sadece komut döndürmeye zorlanır.
 - **TUI (İnteraktif Mod):** `localghost -i` komutuyla, komut geçmişini ve çıktıları tek ekranda görebileceğiniz Ratatui tabanlı tam ekran oturum moduna geçebilirsiniz.
-- **Güvenlik Filtresi:** Kötü niyetli veya yıkıcı komutları (`rm -rf /` vb.) çalıştırmadan önce yakalayan genişletilmiş bir regex güvenlik duvarı barındırır.
+- **Zero-Trust Execution (Çalıştırma) Katmanı:** Üretilen komutu `-x` bayrağı ile anında güvenle çalıştırabilirsiniz. Sistem "Default-Deny" prensibiyle çalışır; Shell injection ve gizli dosyalara sızmayı donanım/syscall seviyesinde izole eder ve onaysız tek bir adım dahi atmaz.
 - **Dağıtım (Distro) ve Donanım Farkındalığı:** Hangi Linux dağıtımında olduğunuzu, paket yöneticinizi (`nix`, `pacman`, `apt` vb.) ve donanımınızı (AMD/Nvidia/Intel) algılar; LLM'e bu bağlamı sağlar.
 - **Akıllı Çevre Profili:** Sisteminizde kurulu modern CLI araçlarını (`fd`, `eza`, `bat`, `rg`) otomatik algılar ve üretilen komutları bunlara göre iyileştirir.
 - **Açıklama Modu (`--explain`):** Üretilen komutu parça parça Türkçe açıklar.
@@ -44,10 +44,15 @@ Spesifik bir model (örneğin `qwen2.5-coder:7b`) kullanarak komut istemek için
 localghost -m qwen2.5-coder:7b "sistemi güncelle"
 ```
 
-### `--explain` (Açıklama Modu)
-Komutun ne işe yaradığını flag'leri ile birlikte detaylı görmek için:
+### Açıklama ve Çalıştırma (Execute) Modları
+Komutun ne işe yaradığını detaylıca Türkçe görmek için `--explain` bayrağını kullanın:
 ```bash
 localghost --explain "son 5 gündeki büyük dosyaları bul"
+```
+
+Üretilen komutu sistemde **otomatik çalıştırmak** için `--execute` (`-x`) bayrağını kullanın (Zero-Trust Güvenlik filtresinden geçer):
+```bash
+localghost -x "şu anki dizini listele"
 ```
 
 ### İnteraktif Mod (TUI)

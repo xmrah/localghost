@@ -40,6 +40,7 @@ pub fn danger_box(command: &str, pattern: &str) {
     eprintln!("{}", "  Çalıştırmadan önce dikkatlice inceleyin!".red());
 }
 
+#[allow(dead_code)]
 pub fn explain_box(command: &str, explanation: &str) {
     println!("{}", command.green().bold());
     if !explanation.is_empty() {
