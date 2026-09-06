@@ -214,7 +214,7 @@ async fn process_query(
         .clone()
         .unwrap_or(config.model.default);
 
-    let system_prompt = crate::build_system_prompt(&distro, &hw, &env, &hist, app.cli.explain);
+    let system_prompt = crate::build_system_prompt(&distro, &hw, &env, app.cli.explain);
 
     let result = ollama::generate(
         &app.cli.ollama_url,

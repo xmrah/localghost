@@ -152,7 +152,6 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     let distro = distro::detect();
     let hw = hardware::detect();
     let env = env_profile::load_or_detect()?;
-    let hist = history::load()?;
 
     // Model seç
     let model = cli.model
@@ -174,7 +173,7 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     };
 
     // Prompt oluştur
-    let mut system_prompt = build_system_prompt(&distro, &hw, &env, &hist, cli.explain);
+    let mut system_prompt = build_system_prompt(&distro, &hw, &env, cli.explain);
 
     if let Some(role_name) = &cli.role {
         if let Some(config_dir) = dirs::config_dir() {
@@ -234,21 +233,10 @@ fn build_system_prompt(
     distro: &distro::DistroInfo,
     hw: &hardware::HardwareInfo,
     env: &env_profile::EnvProfile,
-    hist: &[history::HistoryEntry],
     explain: bool,
 ) -> String {
     let hw_hints = hw.to_context_string();
     let alias_hints = env.to_context_string();
-    let history_ctx = if hist.is_empty() {
-        "None".to_string()
-    } else {
-        hist.iter()
-            .rev()
-            .take(5)
-            .map(|e| format!("Q: {} → A: {}", e.query, e.command))
-            .collect::<Vec<_>>()
-            .join("; ")
-    };
 
     if explain {
         format!(
@@ -256,13 +244,12 @@ fn build_system_prompt(
             Output JSON with this schema: {{\"command\": \"<shell command>\", \"explanation\": \"<detailed explanation of each part>\"}}. \
             Explanation must be in Turkish. Be specific about each flag and argument. \
             RULES: 1. Output ONLY valid JSON. 2. Use {pkg} for package management. \
-            CONTEXT: Hardware: {hw}. Aliases: {alias}. Recent: {hist}.",
+            CONTEXT: Hardware: {hw}. Aliases: {alias}.",
             name = distro.name,
             id = distro.id,
             pkg = distro.pkg_manager,
             hw = hw_hints,
             alias = alias_hints,
-            hist = history_ctx,
         )
     } else {
         format!(
@@ -273,16 +260,16 @@ fn build_system_prompt(
             2. The command field must contain ONE valid shell command, no explanations, no markdown. \
             3. Use {pkg} for package management. For NixOS use nixos-rebuild or nix profile, NEVER apt/dpkg. \
             4. STRICT RULE: DO NOT generate commands with placeholders (like /path/to/dir, <file>, etc). If the user request is missing required specific information (like a filename or directory), your command MUST be an echo statement asking for the missing info. Example: echo 'Lütfen silinecek dosyanın adını belirtin.' \
-            5. EXAMPLES: \
+            5. ROOT WILDCARD RULE: If a command requires root (sudo) and uses wildcards (*) or pipes (|) on protected directories (e.g. /etc/), you MUST use a tool that expands internally (like sudo grep -r) or wrap the entire command in sudo sh -c '...'. \
+            6. EXAMPLES: \
             Q: update system → {{\"command\": \"sudo nixos-rebuild switch --upgrade\", \"risk_level\": \"safe\"}} \
             Q: find large files → {{\"command\": \"fd --size +500M\", \"risk_level\": \"safe\"}} \
-            CONTEXT: Hardware: {hw}. Aliases: {alias}. Recent: {hist}.",
+            CONTEXT: Hardware: {hw}. Aliases: {alias}.",
             name = distro.name,
             id = distro.id,
             pkg = distro.pkg_manager,
             hw = hw_hints,
             alias = alias_hints,
-            hist = history_ctx,
         )
     }
 }
