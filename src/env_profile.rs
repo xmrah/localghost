@@ -77,7 +77,7 @@ fn detect_and_save() -> Result<EnvProfile> {
 
     // Modern araç kontrolleri
     let checks: &[(&str, &str, &str, &str)] = &[
-        ("find", "find", "fd", "fd"),
+        // find -> fd dönüşümünü kaldırdık, çünkü LLM'ler find'ın karmaşık argümanlarını fd'ye uyarlarken çuvallıyor
         ("ls",   "ls",   "eza", "eza"),
         ("cat",  "cat",  "bat", "bat"),
         ("grep", "grep", "ripgrep", "rg"),

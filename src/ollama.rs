@@ -117,7 +117,7 @@ pub async fn generate(
 
     // JSON parse et
     let parsed: serde_json::Map<String, Value> = serde_json::from_str(json_str)
-        .map_err(|e| anyhow!("JSON parse hatası: {}\nHam yanıt: {}", e, raw))?;
+        .map_err(|e| anyhow!("Model geçerli bir komut üretemedi (JSON parse hatası).\n\nBunun sebebi şunlar olabilir:\n1. Verdiğiniz rol (--role) veya istek modelin kafasını karıştırmış olabilir.\n2. Kullanılan model çok küçük (örn: 1b-3b) veya JSON çıktısı vermede başarısız.\n\nHata Detayı: {}\n\nHam Yanıt: {}", e, raw))?;
 
     let command = parsed.get("command")
         .and_then(|v| v.as_str())
