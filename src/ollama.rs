@@ -79,7 +79,7 @@ pub async fn generate(
         .timeout(std::time::Duration::from_secs(120))
         .build()?;
 
-    let format_schema = make_format_schema(explain);
+    let _format_schema = make_format_schema(explain);
 
     let payload = GenerateRequest {
         model,

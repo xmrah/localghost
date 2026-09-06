@@ -82,10 +82,8 @@ pub fn analyze_command(cmd: &str) -> ExecutionTier {
         }
 
         // c. Absolute Path kontrolü (Sadece /tmp/ altında olanlara izin var)
-        if path.is_absolute() {
-            if !arg.starts_with("/tmp/") {
-                return ExecutionTier::Tier1ConfirmRequired(format!("Güvenli bölge ($PWD) dışı mutlak yol erişimi: '{}'", arg));
-            }
+        if path.is_absolute() && !arg.starts_with("/tmp/") {
+            return ExecutionTier::Tier1ConfirmRequired(format!("Güvenli bölge ($PWD) dışı mutlak yol erişimi: '{}'", arg));
         }
     }
 

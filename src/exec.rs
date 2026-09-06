@@ -10,7 +10,17 @@ pub fn execute_command(cmd: &str) -> Result<()> {
     match tier {
         ExecutionTier::Tier0AutoExec => {
             // GÜVENLİ: Shell'siz doğrudan argv tabanlı çalıştırma. Shell injection riski sıfır.
-            let argv = shell_words::split(cmd).unwrap();
+            let argv = match shell_words::split(cmd) {
+                Ok(args) if !args.is_empty() => args,
+                Ok(_) => {
+                    eprintln!("❌ Boş komut çalıştırılamaz.");
+                    return Ok(());
+                }
+                Err(e) => {
+                    eprintln!("❌ Komut ayrıştırılamadı: {}", e);
+                    return Ok(());
+                }
+            };
             
             println!("🚀 Çalıştırılıyor (Oto-Onaylı): {}\n", cmd);
             

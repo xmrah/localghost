@@ -64,7 +64,7 @@ impl Default for Config {
 
 pub fn load() -> Result<Config> {
     let path = config_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))
+        .expect("XDG_CONFIG_HOME veya HOME ortam değişkeni bulunamadı")
         .join(CONFIG_FILENAME);
 
     if !path.exists() {
@@ -79,7 +79,7 @@ pub fn load() -> Result<Config> {
 #[allow(dead_code)]
 pub fn save(config: &Config) -> Result<()> {
     let path = config_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))
+        .expect("XDG_CONFIG_HOME veya HOME ortam değişkeni bulunamadı")
         .join(CONFIG_FILENAME);
 
     if let Some(parent) = path.parent() {
@@ -94,6 +94,6 @@ pub fn save(config: &Config) -> Result<()> {
 #[allow(dead_code)]
 pub fn config_path() -> std::path::PathBuf {
     config_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("~/.config"))
+        .expect("XDG_CONFIG_HOME veya HOME ortam değişkeni bulunamadı")
         .join(CONFIG_FILENAME)
 }

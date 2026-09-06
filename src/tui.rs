@@ -245,7 +245,7 @@ fn render(f: &mut Frame, app: &App) {
     let title = Paragraph::new(
         Line::from(vec![
             Span::styled("👻 LocalGhost", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-            Span::styled(" v1.0", Style::default().fg(Color::DarkGray)),
+            Span::styled(format!(" v{}", env!("CARGO_PKG_VERSION")), Style::default().fg(Color::DarkGray)),
             Span::styled("  |  Ctrl+C: çıkış  |  Enter: gönder  |  Esc: temizle",
                 Style::default().fg(Color::DarkGray)),
         ])

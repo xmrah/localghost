@@ -43,7 +43,7 @@ function ??() {
 }
 "#;
 
-    append_to_file(&bash_config, bash_script)?;
+    idempotent_append(&bash_config, bash_script)?;
     Ok(())
 }
 
@@ -58,8 +58,27 @@ function ??() {
 }
 "#;
 
-    append_to_file(&zsh_config, zsh_script)?;
+    idempotent_append(&zsh_config, zsh_script)?;
     Ok(())
+}
+
+fn idempotent_append(path: &PathBuf, content: &str) -> Result<()> {
+    // Eğer zaten eklenmiş ise tekrar ekleme
+    if path.exists() {
+        let existing = std::fs::read_to_string(path)?;
+        if existing.contains("# Localghost Integration") {
+            // Eski bloğu sil, yenisini ekle
+            let cleaned: String = existing
+                .lines()
+                .collect::<Vec<_>>()
+                .split(|line| line.contains("# Localghost Integration"))
+                .next()
+                .unwrap_or(&[])
+                .join("\n");
+            std::fs::write(path, cleaned)?;
+        }
+    }
+    append_to_file(path, content)
 }
 
 fn append_to_file(path: &PathBuf, content: &str) -> Result<()> {

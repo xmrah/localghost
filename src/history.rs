@@ -15,7 +15,7 @@ pub struct HistoryEntry {
 
 fn history_path() -> std::path::PathBuf {
     data_local_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("~/.local/share"))
+        .expect("XDG_DATA_HOME veya HOME ortam değişkeni bulunamadı")
         .join(HISTORY_FILE)
 }
 

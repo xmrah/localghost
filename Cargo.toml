@@ -1,6 +1,6 @@
 [package]
 name = "localghost"
-version = "1.0.0"
+version = "1.2.0"
 edition = "2021"
 description = "Local AI terminal assistant for Linux — privacy-first, distro-aware, Ollama-powered"
 license = "MIT"

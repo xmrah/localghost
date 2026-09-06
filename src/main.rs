@@ -125,8 +125,20 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
 
     let final_query = match &cli.file {
         Some(filepath) => {
+            // Dosya boyutu kontrolü (max 64KB)
+            match std::fs::metadata(filepath) {
+                Ok(meta) if meta.len() > 65536 => {
+                    crate::output::warn(&format!("Dosya çok büyük ({} KB). Maksimum 64 KB desteklenir.", meta.len() / 1024));
+                    return Ok(());
+                }
+                Err(e) => {
+                    crate::output::warn(&format!("Dosya okunamadı ({}): {}", filepath, e));
+                    return Ok(());
+                }
+                _ => {}
+            }
             match std::fs::read_to_string(filepath) {
-                Ok(content) => format!("{}\n\n[AŞAĞIDAKİ DOSYA İÇERİĞİNİ BAZ AL]: {}\n```\n{}\n```", original_query, filepath, content),
+                Ok(file_content) => format!("{}\n\n[AŞAĞIDAKİ DOSYA İÇERİĞİNİ BAZ AL]: {}\n```\n{}\n```", original_query, filepath, file_content),
                 Err(e) => {
                     crate::output::warn(&format!("Dosya okunamadı ({}): {}", filepath, e));
                     return Ok(());
@@ -208,11 +220,11 @@ async fn run_query(cli: &Cli, query: &str) -> Result<()> {
     }
 
     // Geçmişe kaydet
-    history::append(&original_query, &cmd)?;
+    history::append(&original_query, cmd)?;
     
     // Execute modundaysak çalıştır (execute_command zaten Tier'a göre davranır)
     if cli.execute {
-        exec::execute_command(&cmd)?;
+        exec::execute_command(cmd)?;
     }
 
     Ok(())
@@ -282,7 +294,8 @@ fn sanitize_query(input: &str, max_len: usize) -> String {
         .collect();
     if cleaned.len() > max_len {
         eprintln!("{}", output::warn_msg(&format!("Sorgu {} karaktere kısaltıldı.", max_len)));
-        cleaned[..max_len].to_string()
+        let end = cleaned.floor_char_boundary(max_len);
+        cleaned[..end].to_string()
     } else {
         cleaned
     }
